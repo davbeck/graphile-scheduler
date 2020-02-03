@@ -134,7 +134,7 @@ export class Runner {
     const checkDate = moment().add(this.checkInterval + this.leadTime, "ms");
     const startingAt = moment().subtract(this.maxAge, "ms");
 
-    this.logger.info(`running check from ${startingAt} to ${checkDate}`);
+    this.logger.debug(`running check from ${startingAt} to ${checkDate}`);
     try {
       let updated: string | null = null;
       do {
