@@ -25,15 +25,15 @@ run({
       name: "send_reminder",
       pattern: "0 10 * * 1-5", // every weekday at 10AM
       timeZone: "America/Los_Angeles",
-      task: async (payload, { job }) => {
-        console.log("send a reminder for", job.run_at);
+      task: async ({ fireDate }) => {
+        console.log("send a reminder for", fireDate);
       },
     },
   ],
 });
 ```
 
-Every weekday at 10AM the task function will be called. You can use `run_at` to access the time the job was originally suppose to be run. If the scheduler goes down and retroactively queues schedules that it missed, this will be when it should have been queued.
+Every weekday at 10AM the task function will be called. You can use `fireDate` to access the time the job was originally suppose to be run. If the scheduler goes down and retroactively queues schedules that it missed or the job is retried, this will be when it should have been queued.
 
 ### Schedule and run jobs separately:
 

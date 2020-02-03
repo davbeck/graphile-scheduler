@@ -7,7 +7,6 @@ export interface Schedule {
 
   taskIdentifier?: string;
   queueName?: string;
-  payload?: any;
   maxAttempts?: number;
 }
 
@@ -16,15 +15,7 @@ export interface Options {
 }
 
 export default function upsertSchedule(
-  {
-    name,
-    pattern,
-    timeZone,
-    taskIdentifier,
-    queueName,
-    payload,
-    maxAttempts,
-  }: Schedule,
+  { name, pattern, timeZone, taskIdentifier, queueName, maxAttempts }: Schedule,
   { inlineValues = false }: Options = {}
 ): [string, any[]] {
   let cron: CronPattern;
@@ -52,7 +43,7 @@ export default function upsertSchedule(
       values.push(`$${args.length}`);
     }
   }
-  for (const value of [name, timeZone, task, queueName, payload, maxAttempts]) {
+  for (const value of [name, timeZone, task, queueName, maxAttempts]) {
     if (value == null) {
       values.push("DEFAULT");
     } else if (inlineValues) {
@@ -70,7 +61,7 @@ export default function upsertSchedule(
   }
 
   let sql = `INSERT INTO "graphile_scheduler"."schedules"
-(minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, payload, max_attempts)
+(minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
 VALUES (${values.join(", ")})
 ON CONFLICT (schedule_name) DO UPDATE SET
   minute = EXCLUDED.minute,
@@ -81,7 +72,6 @@ ON CONFLICT (schedule_name) DO UPDATE SET
   timezone = EXCLUDED.timezone,
   task_identifier = EXCLUDED.task_identifier,
   queue_name = EXCLUDED.queue_name,
-  payload = EXCLUDED.payload,
   max_attempts = EXCLUDED.max_attempts;`;
 
   return [sql, args];

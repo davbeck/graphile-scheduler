@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS "graphile_scheduler"."schedules" (
     
     "task_identifier" text NOT NULL,
     "queue_name" text DEFAULT (public.gen_random_uuid())::text NOT NULL,
-    "payload" json NOT NULL DEFAULT '{}',
     "max_attempts" integer NOT NULL DEFAULT '25',
     "created_at" timestamp with time zone NOT NULL DEFAULT now(),
     "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
@@ -82,7 +81,7 @@ BEGIN
   	  INSERT INTO graphile_worker.jobs(task_identifier, payload, queue_name, run_at, max_attempts) 
   	    VALUES(
   	      v_schedule.task_identifier, 
-  	      v_schedule.payload, 
+  	      json_object_agg('fireDate', date_trunc('minute', v_next_check)), 
   	      v_schedule.queue_name, 
   	      date_trunc('minute', v_next_check), 
   	      v_schedule.max_attempts

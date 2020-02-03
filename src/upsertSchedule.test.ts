@@ -10,7 +10,6 @@ describe(upsertSchedule, () => {
 
         taskIdentifier: "something_new_task",
         queueName: "something_new_queue",
-        payload: { hello: "world" },
         maxAttempts: 20,
       },
       { inlineValues: true }
@@ -19,7 +18,7 @@ describe(upsertSchedule, () => {
     expect(sql.replace(/\s/g, "")).toEqual(
       `
     INSERT INTO "graphile_scheduler"."schedules"
-    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, payload, max_attempts)
+    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES (
       '{0}',
       '{10}',
@@ -42,7 +41,6 @@ describe(upsertSchedule, () => {
         timezone = EXCLUDED.timezone,
         task_identifier = EXCLUDED.task_identifier,
         queue_name = EXCLUDED.queue_name,
-        payload = EXCLUDED.payload,
         max_attempts = EXCLUDED.max_attempts;
     `.replace(/\s/g, "")
     );
@@ -58,14 +56,13 @@ describe(upsertSchedule, () => {
 
       taskIdentifier: "something_new_task",
       queueName: "something_new_queue",
-      payload: { hello: "world" },
       maxAttempts: 20,
     });
 
     expect(sql.replace(/\s/g, "")).toEqual(
       `
     INSERT INTO "graphile_scheduler"."schedules"
-    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, payload, max_attempts)
+    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     ON CONFLICT (schedule_name) DO UPDATE
     SET minute = EXCLUDED.minute,
@@ -76,7 +73,6 @@ describe(upsertSchedule, () => {
         timezone = EXCLUDED.timezone,
         task_identifier = EXCLUDED.task_identifier,
         queue_name = EXCLUDED.queue_name,
-        payload = EXCLUDED.payload,
         max_attempts = EXCLUDED.max_attempts;
     `.replace(/\s/g, "")
     );
@@ -91,7 +87,6 @@ describe(upsertSchedule, () => {
       timeZone: "America/New_York",
 
       queueName: "something_new_queue",
-      payload: { hello: "world" },
       maxAttempts: 20,
     })[1];
 
@@ -112,7 +107,7 @@ describe(upsertSchedule, () => {
     expect(sql.replace(/\s/g, "")).toEqual(
       `
     INSERT INTO "graphile_scheduler"."schedules"
-    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, payload, max_attempts)
+    (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES (
       '{0}',
       '{10}',
@@ -135,7 +130,6 @@ describe(upsertSchedule, () => {
         timezone = EXCLUDED.timezone,
         task_identifier = EXCLUDED.task_identifier,
         queue_name = EXCLUDED.queue_name,
-        payload = EXCLUDED.payload,
         max_attempts = EXCLUDED.max_attempts;
     `.replace(/\s/g, "")
     );
