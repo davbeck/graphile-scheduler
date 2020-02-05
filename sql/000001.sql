@@ -81,7 +81,7 @@ BEGIN
   	  INSERT INTO graphile_worker.jobs(task_identifier, payload, queue_name, run_at, max_attempts) 
   	    VALUES(
   	      v_schedule.task_identifier, 
-  	      json_object_agg('fireDate', date_trunc('minute', v_next_check)), 
+  	      json_build_object('fireDate', date_trunc('minute', v_next_check)),
   	      v_schedule.queue_name, 
   	      date_trunc('minute', v_next_check), 
   	      v_schedule.max_attempts
