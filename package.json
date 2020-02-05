@@ -1,8 +1,9 @@
 {
-  "name": "graphile-scheduler",
-  "version": "0.0.0",
+  "name": "@davbeck/graphile-scheduler",
+  "version": "0.0.1",
   "description": "Job scheduler for PostgreSQL",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "prepack": "rm -Rf dist && tsc",
     "watch": "mkdir -p dist && tsc --watch",
