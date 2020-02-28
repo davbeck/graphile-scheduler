@@ -90,3 +90,7 @@ If you omit `schedules` completely, every schedule in the database will be check
 ```js
 run({ connectionString: "postgres:///" });
 ```
+
+## Status
+
+This project is feature complete and in use, but has not yet been battle tested and test coverage is incomplete. It is possilbe that there will be breaking changes leading up to a 1.0.0 release.
