@@ -94,3 +94,5 @@ run({ connectionString: "postgres:///" });
 ## Status
 
 This project is feature complete and in use, but has not yet been battle tested and test coverage is incomplete. It is possilbe that there will be breaking changes leading up to a 1.0.0 release.
+
+Additionally, graphile-worker is still in early development as well, so until it reaches 1.0.0 the project pins it's dependency to it at a fixed version number.

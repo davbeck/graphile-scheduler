@@ -35,7 +35,7 @@
     "@types/debug": "^4.1.2",
     "@types/jest": "^24.0.11",
     "@types/pg": "^7.4.11",
-    "graphile-worker": "^0.2.0",
+    "graphile-worker": "0.4.0",
     "moment": "^2.24.0",
     "pg": ">=6.5 <8",
     "pg-connection-string": "^2.0.0",
