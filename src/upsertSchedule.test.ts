@@ -29,7 +29,6 @@ describe(upsertSchedule, () => {
       'America/New_York',
       'something_new_task',
       'something_new_queue',
-      '{ "hello": "world" }',
       20
     )
     ON CONFLICT (schedule_name) DO UPDATE
@@ -63,7 +62,7 @@ describe(upsertSchedule, () => {
       `
     INSERT INTO "graphile_scheduler"."schedules"
     (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     ON CONFLICT (schedule_name) DO UPDATE
     SET minute = EXCLUDED.minute,
         hour = EXCLUDED.hour,
@@ -77,7 +76,7 @@ describe(upsertSchedule, () => {
     `.replace(/\s/g, "")
     );
 
-    expect(args).toHaveLength(11);
+    expect(args).toHaveLength(10);
   });
 
   it("generates sql defaulting taskIdentifier", () => {
@@ -90,7 +89,7 @@ describe(upsertSchedule, () => {
       maxAttempts: 20,
     })[1];
 
-    expect(args).toHaveLength(11);
+    expect(args).toHaveLength(10);
     expect(args[7]).toEqual("something_new");
   });
 
@@ -117,7 +116,6 @@ describe(upsertSchedule, () => {
       'something_new',
       'America/New_York',
       'something_new',
-      DEFAULT,
       DEFAULT,
       DEFAULT
     )
