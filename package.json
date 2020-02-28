@@ -1,5 +1,5 @@
 {
-  "name": "@davbeck/graphile-scheduler",
+  "name": "graphile-scheduler",
   "version": "0.0.1",
   "description": "Job scheduler for PostgreSQL",
   "main": "dist/index.js",
