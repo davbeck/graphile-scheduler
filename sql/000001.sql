@@ -41,7 +41,7 @@ ALTER TABLE "graphile_scheduler"."schedules" ENABLE ROW LEVEL SECURITY;
 CREATE TRIGGER _100_timestamps BEFORE UPDATE ON "graphile_scheduler"."schedules" FOR EACH ROW EXECUTE PROCEDURE graphile_worker.tg__update_timestamp();
 
 
-CREATE OR REPLACE FUNCTION graphile_worker.schedules_matches(schedule graphile_scheduler.schedules, check_time TIMESTAMP WITH TIME ZONE = NOW())
+CREATE OR REPLACE FUNCTION graphile_scheduler.schedules_matches(schedule graphile_scheduler.schedules, check_time TIMESTAMP WITH TIME ZONE = NOW())
 RETURNS BOOLEAN
 AS $$
   SELECT EXTRACT(minute FROM check_time) = ANY(schedule.minute)
@@ -52,7 +52,7 @@ AS $$
 $$ LANGUAGE sql;
 
 
-CREATE OR REPLACE FUNCTION graphile_worker.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW()) 
+CREATE OR REPLACE FUNCTION graphile_scheduler.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW()) 
 RETURNS graphile_scheduler.schedules
 AS $$
 DECLARE
@@ -77,15 +77,14 @@ BEGIN
   LOOP
     v_next_check := v_next_check + interval '1 minute';
     
-  	IF graphile_worker.schedules_matches(v_schedule, v_next_check) THEN
-  	  INSERT INTO graphile_worker.jobs(task_identifier, payload, queue_name, run_at, max_attempts) 
-  	    VALUES(
-  	      v_schedule.task_identifier, 
-  	      json_build_object('fireDate', date_trunc('minute', v_next_check)),
-  	      v_schedule.queue_name, 
-  	      date_trunc('minute', v_next_check), 
-  	      v_schedule.max_attempts
-  	    );
+  	IF graphile_scheduler.schedules_matches(v_schedule, v_next_check) THEN
+      PERFORM graphile_worker.add_job(
+        identifier := v_schedule.task_identifier,
+        payload := json_build_object('fireDate', date_trunc('minute', v_next_check)),
+        queue_name := v_schedule.queue_name, 
+        run_at := date_trunc('minute', v_next_check), 
+        max_attempts := v_schedule.max_attempts
+      );
   	END IF;
   	
     EXIT WHEN v_next_check > until;

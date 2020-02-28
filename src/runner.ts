@@ -44,7 +44,7 @@ export class Runner {
     leadTime,
     maxAge,
     ...options
-  }: RunnerOptions) {
+  }: RunnerOptions = {}) {
     this.checkInterval = checkInterval ?? 60 * 1000;
     this.leadTime = leadTime ?? 0;
     this.maxAge = maxAge ?? 1000 * 60 * 60 * 24 * 3;
@@ -139,7 +139,7 @@ export class Runner {
       let updated: string | null = null;
       do {
         const res = await client.query(
-          "SELECT * FROM graphile_worker.check_schedule($1, $2, $3)",
+          "SELECT * FROM graphile_scheduler.check_schedule($1, $2, $3)",
           [this.scheduleNames, startingAt, checkDate.toDate()]
         );
         updated = res.rows[0].schedule_name;
@@ -189,13 +189,13 @@ export class Runner {
   }
 }
 
-export async function run(options: RunnerOptions) {
+export async function run(options: RunnerOptions = {}) {
   let runner = new Runner(options);
   await runner.run();
   return runner;
 }
 
-export async function runOnce(options: RunnerOptions) {
+export async function runOnce(options: RunnerOptions = {}) {
   let runner = new Runner(options);
   await runner.runOnce();
   return runner;

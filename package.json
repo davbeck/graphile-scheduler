@@ -43,6 +43,7 @@
     "yargs": "^15.1.0"
   },
   "devDependencies": {
+    "@types/sinon": "^7.5.2",
     "@types/yargs": "^15.0.0",
     "@typescript-eslint/eslint-plugin": "^2.5.0",
     "@typescript-eslint/parser": "^2.5.0",
@@ -53,6 +54,7 @@
     "eslint_d": "^8.0.0",
     "jest": "^24.5.0",
     "prettier": "^1.16.4",
+    "sinon": "^9.0.0",
     "ts-jest": "^24.0.0",
     "tsc-watch": "^4.0.0",
     "typescript": "^3.3.3333"

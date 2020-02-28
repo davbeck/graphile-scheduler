@@ -1,4 +1,4 @@
-import upsertSchedule from "./upsertSchedule";
+import upsertSchedule from "../src/upsertSchedule";
 
 describe(upsertSchedule, () => {
   it("generates sql", () => {

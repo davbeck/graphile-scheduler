@@ -1,4 +1,4 @@
-import parseCron from "./parseCron";
+import parseCron from "../src/parseCron";
 
 describe(parseCron, () => {
   it("parses single values", () => {
