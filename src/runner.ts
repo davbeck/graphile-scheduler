@@ -8,8 +8,9 @@ import {
   Runner as WorkerRunner,
   run as runWorker,
   runOnce as runWorkerOnce,
+  Logger,
 } from "graphile-worker";
-import { defaultLogger, Logger } from "graphile-worker/dist/logger";
+import { defaultLogger } from "graphile-worker/dist/logger";
 import upsertSchedule, { Schedule } from "./upsertSchedule";
 
 export interface ScheduleConfig extends Schedule {
