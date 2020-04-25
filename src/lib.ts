@@ -1,4 +1,3 @@
-import { defaults } from "./config";
 import { RunnerOptions } from "./runner";
 import { Client } from "pg";
 
@@ -7,7 +6,13 @@ export interface CompiledOptions extends RunnerOptions {
   escapedWorkerSchema: string;
 }
 
-export function processOptions(options: RunnerOptions) {
+const defaults = {
+  workerSchema: process.env.GRAPHILE_WORKER_SCHEMA ?? "graphile_worker",
+  schedulerSchema:
+    process.env.GRAPHILE_SCHEDULER_SCHEMA ?? "graphile_scheduler",
+};
+
+export function processOptions(options: RunnerOptions = {}) {
   return {
     ...defaults,
     ...options,

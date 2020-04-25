@@ -2,7 +2,6 @@ import * as assert from "assert";
 import * as moment from "moment";
 import { Pool } from "pg";
 import { migrate } from "./migrate";
-import { defaults } from "./config";
 import {
   Task,
   RunnerOptions as WorkerRunnerOptions,
@@ -49,10 +48,7 @@ export class Runner {
   interval: NodeJS.Timeout | null;
   workerRunner: WorkerRunner | null;
 
-  constructor(options: RunnerOptions = defaults) {
-    options.schedulerSchema =
-      options.schedulerSchema ?? defaults.schedulerSchema;
-    options.workerSchema = options.workerSchema ?? defaults.workerSchema;
+  constructor(options: RunnerOptions = {}) {
     const {
       schedules,
       pgPool,
@@ -60,7 +56,7 @@ export class Runner {
       checkInterval,
       leadTime,
       maxAge,
-      workerSchema = defaults.workerSchema,
+      workerSchema,
       ...workerOptions
     } = options;
     this.options = options;

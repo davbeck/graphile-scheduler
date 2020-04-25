@@ -17,9 +17,7 @@ describe("runner", () => {
 
   it("queues upcoming jobs", () =>
     withPgPool(async pgPool => {
-      const { escapedWorkerSchema, escapedSchedulerSchema } = processOptions(
-        {}
-      );
+      const { escapedWorkerSchema, escapedSchedulerSchema } = processOptions();
 
       await reset({}, pgPool);
       await pgPool.query(`
