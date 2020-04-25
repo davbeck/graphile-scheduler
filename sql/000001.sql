@@ -1,33 +1,42 @@
-CREATE OR REPLACE FUNCTION graphile_scheduler.every_minute() RETURNS integer[] AS $$
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.every_minute() RETURNS integer[] AS $$
 	SELECT ARRAY_AGG(range) FROM GENERATE_SERIES(0,59) AS range;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.every_hour() RETURNS integer[] AS $$
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.every_hour() RETURNS integer[] AS $$
 	SELECT ARRAY_AGG(range) FROM GENERATE_SERIES(0,23) AS range;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.every_day() RETURNS integer[] AS $$
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.every_day() RETURNS integer[] AS $$
 	SELECT ARRAY_AGG(range) FROM GENERATE_SERIES(1,31) AS range;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.every_month() RETURNS integer[] AS $$
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.every_month() RETURNS integer[] AS $$
 	SELECT ARRAY_AGG(range) FROM GENERATE_SERIES(1,12) AS range;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.every_dow() RETURNS integer[] AS $$
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.every_dow() RETURNS integer[] AS $$
 	SELECT ARRAY_AGG(range) FROM GENERATE_SERIES(0,7) AS range;
 $$ LANGUAGE SQL;
 
 
-CREATE TABLE IF NOT EXISTS "graphile_scheduler"."schedules" (
+-- Keep updated_at up to date
+create function :GRAPHILE_SCHEDULER_SCHEMA.tg__update_timestamp() returns trigger as $$
+begin
+  new.updated_at = greatest(now(), old.updated_at + interval '1 millisecond');
+  return new;
+end;
+$$ language plpgsql;
+
+
+CREATE TABLE IF NOT EXISTS :GRAPHILE_SCHEDULER_SCHEMA."schedules" (
     "schedule_name" text,
     "last_checked" timestamp with time zone NOT NULL DEFAULT now(),
     
-    "minute" integer[] NOT NULL DEFAULT graphile_scheduler.every_minute(),
-    "hour" integer[] NOT NULL DEFAULT graphile_scheduler.every_hour(),
-    "day" integer[] NOT NULL DEFAULT graphile_scheduler.every_day(),
-    "month" integer[] NOT NULL DEFAULT graphile_scheduler.every_month(),
-    "dow" integer[] NOT NULL DEFAULT graphile_scheduler.every_dow(),
+    "minute" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_minute(),
+    "hour" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_hour(),
+    "day" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_day(),
+    "month" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_month(),
+    "dow" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_dow(),
     "timezone" TEXT NOT NULL CHECK (NOW() AT TIME ZONE timezone IS NOT NULL) DEFAULT current_setting('TIMEZONE'),
     
     "task_identifier" text NOT NULL,
@@ -37,11 +46,11 @@ CREATE TABLE IF NOT EXISTS "graphile_scheduler"."schedules" (
     "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
     PRIMARY KEY ("schedule_name")
 );
-ALTER TABLE "graphile_scheduler"."schedules" ENABLE ROW LEVEL SECURITY;
-CREATE TRIGGER _100_timestamps BEFORE UPDATE ON "graphile_scheduler"."schedules" FOR EACH ROW EXECUTE PROCEDURE graphile_worker.tg__update_timestamp();
+ALTER TABLE :GRAPHILE_SCHEDULER_SCHEMA."schedules" ENABLE ROW LEVEL SECURITY;
+CREATE TRIGGER _100_timestamps BEFORE UPDATE ON :GRAPHILE_SCHEDULER_SCHEMA."schedules" FOR EACH ROW EXECUTE PROCEDURE :GRAPHILE_SCHEDULER_SCHEMA.tg__update_timestamp();
 
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.schedules_matches(schedule graphile_scheduler.schedules, check_time TIMESTAMP WITH TIME ZONE = NOW())
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(schedule :GRAPHILE_SCHEDULER_SCHEMA.schedules, check_time TIMESTAMP WITH TIME ZONE = NOW())
 RETURNS BOOLEAN
 AS $$
   SELECT EXTRACT(minute FROM check_time) = ANY(schedule.minute)
@@ -52,15 +61,15 @@ AS $$
 $$ LANGUAGE sql;
 
 
-CREATE OR REPLACE FUNCTION graphile_scheduler.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW()) 
-RETURNS graphile_scheduler.schedules
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW()) 
+RETURNS :GRAPHILE_SCHEDULER_SCHEMA.schedules
 AS $$
 DECLARE
-  v_schedule graphile_scheduler.schedules;
+  v_schedule :GRAPHILE_SCHEDULER_SCHEMA.schedules;
   v_next_check TIMESTAMP WITH TIME ZONE;
 BEGIN
   SELECT * INTO v_schedule
-    FROM graphile_scheduler.schedules
+    FROM :GRAPHILE_SCHEDULER_SCHEMA.schedules
     WHERE last_checked < until
     AND (schedule_names IS NULL OR schedule_name = any(schedule_names))
     ORDER BY last_checked ASC
@@ -77,8 +86,8 @@ BEGIN
   LOOP
     v_next_check := v_next_check + interval '1 minute';
     
-  	IF graphile_scheduler.schedules_matches(v_schedule, v_next_check) THEN
-      PERFORM graphile_worker.add_job(
+  	IF :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(v_schedule, v_next_check) THEN
+      PERFORM :GRAPHILE_WORKER_SCHEMA.add_job(
         identifier := v_schedule.task_identifier,
         payload := json_build_object('fireDate', date_trunc('minute', v_next_check)),
         queue_name := v_schedule.queue_name, 
@@ -90,7 +99,7 @@ BEGIN
     EXIT WHEN v_next_check > until;
   END LOOP ;
 
-  UPDATE graphile_scheduler.schedules
+  UPDATE :GRAPHILE_SCHEDULER_SCHEMA.schedules
     SET last_checked = v_next_check
     WHERE schedule_name = v_schedule.schedule_name
     RETURNING * INTO v_schedule;

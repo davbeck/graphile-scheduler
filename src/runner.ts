@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as moment from "moment";
 import { Pool } from "pg";
 import { migrate } from "./migrate";
+import { defaults } from "./config";
 import {
   Task,
   RunnerOptions as WorkerRunnerOptions,
@@ -13,19 +14,29 @@ import {
   Logger,
 } from "graphile-worker";
 import upsertSchedule, { Schedule } from "./upsertSchedule";
+import { processOptions } from "./lib";
 
 export interface ScheduleConfig extends Schedule {
   task?: Task;
 }
 
-export interface RunnerOptions extends WorkerRunnerOptions {
+export interface RunnerOptions extends Omit<WorkerRunnerOptions, "schema"> {
   checkInterval?: number;
   leadTime?: number;
   maxAge?: number;
   schedules?: (string | ScheduleConfig)[];
+  /**
+   * Which PostgreSQL schema should Graphile Worker use for graphile-worker? Defaults to 'graphile_worker'.
+   */
+  workerSchema?: string;
+  /**
+   * Which PostgreSQL schema should Graphile Worker use for graphile-scheduler? Defaults to 'graphile_scheduler'.
+   */
+  schedulerSchema?: string;
 }
 
 export class Runner {
+  options: RunnerOptions;
   workerOptions: WorkerRunnerOptions;
   pgPool: Pool;
   logger: Logger;
@@ -38,15 +49,21 @@ export class Runner {
   interval: NodeJS.Timeout | null;
   workerRunner: WorkerRunner | null;
 
-  constructor({
-    schedules,
-    pgPool,
-    connectionString,
-    checkInterval,
-    leadTime,
-    maxAge,
-    ...options
-  }: RunnerOptions = {}) {
+  constructor(options: RunnerOptions = defaults) {
+    options.schedulerSchema =
+      options.schedulerSchema ?? defaults.schedulerSchema;
+    options.workerSchema = options.workerSchema ?? defaults.workerSchema;
+    const {
+      schedules,
+      pgPool,
+      connectionString,
+      checkInterval,
+      leadTime,
+      maxAge,
+      workerSchema = defaults.workerSchema,
+      ...workerOptions
+    } = options;
+    this.options = options;
     this.checkInterval = checkInterval ?? 60 * 1000;
     this.leadTime = leadTime ?? 0;
     this.maxAge = maxAge ?? 1000 * 60 * 60 * 24 * 3;
@@ -103,7 +120,12 @@ export class Runner {
       }
     }
 
-    this.workerOptions = { ...options, taskList, pgPool: this.pgPool };
+    this.workerOptions = {
+      ...workerOptions,
+      taskList,
+      pgPool: this.pgPool,
+      schema: workerSchema,
+    };
   }
 
   get shouldRunWorker(): boolean {
@@ -120,7 +142,7 @@ export class Runner {
     const client = await this.pgPool.connect();
 
     try {
-      await migrate(client);
+      await migrate(this.options, client);
 
       for (const schedule of this.schedules ?? []) {
         if (typeof schedule === "object") {
@@ -134,6 +156,7 @@ export class Runner {
   }
 
   private async check() {
+    const { escapedSchedulerSchema } = processOptions(this.options);
     const client = await this.pgPool.connect();
     const checkDate = moment().add(this.checkInterval + this.leadTime, "ms");
     const startingAt = moment().subtract(this.maxAge, "ms");
@@ -143,7 +166,7 @@ export class Runner {
       let updated: string | null = null;
       do {
         const res = await client.query(
-          "SELECT * FROM graphile_scheduler.check_schedule($1, $2, $3)",
+          `SELECT * FROM ${escapedSchedulerSchema}.check_schedule($1, $2, $3)`,
           [this.scheduleNames, startingAt, checkDate.toDate()]
         );
         updated = res.rows[0].schedule_name;
