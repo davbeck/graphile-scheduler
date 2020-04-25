@@ -1,6 +1,6 @@
 {
   "name": "graphile-scheduler",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "description": "Job scheduler for PostgreSQL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,7 @@
     "prepack": "rm -Rf dist && tsc",
     "watch": "mkdir -p dist && tsc --watch",
     "lint": "eslint 'src/**/*'",
-    "test": "createdb graphile_scheduler_test || true && psql -Xv ON_ERROR_STOP=1 -f __tests__/reset-db.sql graphile_scheduler_test && jest -i"
+    "test": "createdb graphile_scheduler_test || true && jest -i"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
     "@types/debug": "^4.1.2",
     "@types/jest": "^24.0.11",
     "@types/pg": "^7.4.11",
-    "graphile-worker": "0.4.0",
+    "graphile-worker": "0.5.0",
     "moment": "^2.24.0",
     "pg": ">=6.5 <8",
     "pg-connection-string": "^2.0.0",

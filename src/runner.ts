@@ -8,9 +8,10 @@ import {
   Runner as WorkerRunner,
   run as runWorker,
   runOnce as runWorkerOnce,
+  runMigrations as runWorkerMigrations,
+  consoleLogFactory,
   Logger,
 } from "graphile-worker";
-import { defaultLogger } from "graphile-worker/dist/logger";
 import upsertSchedule, { Schedule } from "./upsertSchedule";
 
 export interface ScheduleConfig extends Schedule {
@@ -50,7 +51,7 @@ export class Runner {
     this.leadTime = leadTime ?? 0;
     this.maxAge = maxAge ?? 1000 * 60 * 60 * 24 * 3;
 
-    this.logger = options.logger ?? defaultLogger;
+    this.logger = options.logger ?? new Logger(consoleLogFactory);
 
     assert(
       !pgPool || !connectionString,
@@ -114,6 +115,8 @@ export class Runner {
   }
 
   async runMigrations() {
+    await runWorkerMigrations(this.workerOptions);
+
     const client = await this.pgPool.connect();
 
     try {

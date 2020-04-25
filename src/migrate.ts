@@ -1,6 +1,9 @@
 import { PoolClient } from "pg";
-import { readdir, readFile } from "graphile-worker/dist/fs";
-import { migrate as migrateWorker } from "graphile-worker/dist/migrate";
+import * as fs from "fs";
+import { promisify } from "util";
+
+export const readFile = promisify(fs.readFile);
+export const readdir = promisify(fs.readdir);
 
 async function installSchema(client: PoolClient) {
   await client.query(`
@@ -36,9 +39,6 @@ async function runMigration(
 }
 
 export async function migrate(client: PoolClient) {
-  // our schema relies on the worker schema
-  await migrateWorker(client);
-
   let latestMigration: number | null = null;
   try {
     const {

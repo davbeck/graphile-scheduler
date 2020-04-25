@@ -1,5 +1,6 @@
 import * as pg from "pg";
 import { migrate } from "../src/migrate";
+import { runMigrations as runWorkerMigrations } from "graphile-worker";
 
 export const TEST_CONNECTION_STRING =
   process.env.TEST_CONNECTION_STRING || "graphile_scheduler_test";
@@ -44,21 +45,16 @@ export async function withTransaction<T = any>(
   });
 }
 
-function isPoolClient(o: any): o is pg.PoolClient {
-  return o && typeof o.release === "function";
-}
+export async function reset(pgPool: pg.Pool) {
+  await pgPool.query("drop schema if exists graphile_worker cascade;");
+  await pgPool.query("drop schema if exists graphile_scheduler cascade;");
 
-export async function reset(pgPoolOrClient: pg.Pool | pg.PoolClient) {
-  await pgPoolOrClient.query("drop schema if exists graphile_worker cascade;");
-  await pgPoolOrClient.query("drop schema if exists graphile_worker cascade;");
-  if (isPoolClient(pgPoolOrClient)) {
-    await migrate(pgPoolOrClient);
-  } else {
-    const client = await pgPoolOrClient.connect();
-    try {
-      await migrate(client);
-    } finally {
-      await client.release();
-    }
+  await runWorkerMigrations({ pgPool });
+
+  const client = await pgPool.connect();
+  try {
+    await migrate(client);
+  } finally {
+    await client.release();
   }
 }
