@@ -134,7 +134,6 @@ export class Runner {
 
   async runMigrations() {
     await runWorkerMigrations(this.workerOptions);
-
     const client = await this.pgPool.connect();
 
     try {
@@ -142,7 +141,7 @@ export class Runner {
 
       for (const schedule of this.schedules ?? []) {
         if (typeof schedule === "object") {
-          const [sql, args] = upsertSchedule(schedule);
+          const [sql, args] = upsertSchedule(schedule, this.options);
           await client.query(sql, args);
         }
       }

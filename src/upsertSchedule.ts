@@ -1,4 +1,6 @@
 import parseCron, { CronPattern } from "./parseCron";
+import { RunnerOptions } from "./runner";
+import { processOptions } from "./lib";
 
 export interface Schedule {
   name: string;
@@ -16,6 +18,7 @@ export interface Options {
 
 export default function upsertSchedule(
   { name, pattern, timeZone, taskIdentifier, queueName, maxAttempts }: Schedule,
+  runnerOptions: RunnerOptions,
   { inlineValues = false }: Options = {}
 ): [string, any[]] {
   let cron: CronPattern;
@@ -24,7 +27,7 @@ export default function upsertSchedule(
   } else {
     cron = pattern;
   }
-
+  const { escapedSchedulerSchema } = processOptions(runnerOptions);
   const task = taskIdentifier ?? name;
 
   let args: any[] = [];
@@ -60,7 +63,7 @@ export default function upsertSchedule(
     }
   }
 
-  let sql = `INSERT INTO "graphile_scheduler"."schedules"
+  let sql = `INSERT INTO ${escapedSchedulerSchema}."schedules"
 (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
 VALUES (${values.join(", ")})
 ON CONFLICT (schedule_name) DO UPDATE SET
