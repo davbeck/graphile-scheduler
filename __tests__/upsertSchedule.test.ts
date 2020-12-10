@@ -1,6 +1,11 @@
 import upsertSchedule from "../src/upsertSchedule";
+import { RunnerOptions } from "../src";
 
 describe(upsertSchedule, () => {
+  const runnerOptions: RunnerOptions = {
+    schedulerSchema: "graphile_scheduler",
+  };
+
   it("generates sql", () => {
     const [sql, args] = upsertSchedule(
       {
@@ -12,12 +17,13 @@ describe(upsertSchedule, () => {
         queueName: "something_new_queue",
         maxAttempts: 20,
       },
+      runnerOptions,
       { inlineValues: true }
     );
 
     expect(sql.replace(/\s/g, "")).toEqual(
       `
-    INSERT INTO "graphile_scheduler"."schedules"
+    INSERT INTO "${runnerOptions.schedulerSchema}"."schedules"
     (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES (
       '{0}',
@@ -48,19 +54,22 @@ describe(upsertSchedule, () => {
   });
 
   it("generates sql with placeholders", () => {
-    const [sql, args] = upsertSchedule({
-      name: "something_new",
-      pattern: "0 10 1 6 5",
-      timeZone: "America/New_York",
+    const [sql, args] = upsertSchedule(
+      {
+        name: "something_new",
+        pattern: "0 10 1 6 5",
+        timeZone: "America/New_York",
 
-      taskIdentifier: "something_new_task",
-      queueName: "something_new_queue",
-      maxAttempts: 20,
-    });
+        taskIdentifier: "something_new_task",
+        queueName: "something_new_queue",
+        maxAttempts: 20,
+      },
+      runnerOptions
+    );
 
     expect(sql.replace(/\s/g, "")).toEqual(
       `
-    INSERT INTO "graphile_scheduler"."schedules"
+    INSERT INTO "${runnerOptions.schedulerSchema}"."schedules"
     (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     ON CONFLICT (schedule_name) DO UPDATE
@@ -80,14 +89,17 @@ describe(upsertSchedule, () => {
   });
 
   it("generates sql defaulting taskIdentifier", () => {
-    const args = upsertSchedule({
-      name: "something_new",
-      pattern: "0 10 1 6 5",
-      timeZone: "America/New_York",
+    const args = upsertSchedule(
+      {
+        name: "something_new",
+        pattern: "0 10 1 6 5",
+        timeZone: "America/New_York",
 
-      queueName: "something_new_queue",
-      maxAttempts: 20,
-    })[1];
+        queueName: "something_new_queue",
+        maxAttempts: 20,
+      },
+      runnerOptions
+    )[1];
 
     expect(args).toHaveLength(10);
     expect(args[7]).toEqual("something_new");
@@ -100,12 +112,13 @@ describe(upsertSchedule, () => {
         pattern: "0 10 1 6 5",
         timeZone: "America/New_York",
       },
+      runnerOptions,
       { inlineValues: true }
     );
 
     expect(sql.replace(/\s/g, "")).toEqual(
       `
-    INSERT INTO "graphile_scheduler"."schedules"
+    INSERT INTO "${runnerOptions.schedulerSchema}"."schedules"
     (minute, hour, day, month, dow, schedule_name, timezone, task_identifier, queue_name, max_attempts)
     VALUES (
       '{0}',
