@@ -31,14 +31,14 @@ $$ language plpgsql;
 CREATE TABLE IF NOT EXISTS :GRAPHILE_SCHEDULER_SCHEMA."schedules" (
     "schedule_name" text,
     "last_checked" timestamp with time zone NOT NULL DEFAULT now(),
-    
+
     "minute" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_minute(),
     "hour" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_hour(),
     "day" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_day(),
     "month" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_month(),
     "dow" integer[] NOT NULL DEFAULT :GRAPHILE_SCHEDULER_SCHEMA.every_dow(),
     "timezone" TEXT NOT NULL CHECK (NOW() AT TIME ZONE timezone IS NOT NULL) DEFAULT current_setting('TIMEZONE'),
-    
+
     "task_identifier" text NOT NULL,
     "queue_name" text DEFAULT (public.gen_random_uuid())::text NOT NULL,
     "max_attempts" integer NOT NULL DEFAULT '25',
@@ -61,7 +61,7 @@ AS $$
 $$ LANGUAGE sql;
 
 
-CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW()) 
+CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.check_schedule(schedule_names text[] = NULL, starting_At TIMESTAMP WITH TIME ZONE = NULL, until TIMESTAMP WITH TIME ZONE = NOW())
 RETURNS :GRAPHILE_SCHEDULER_SCHEMA.schedules
 AS $$
 DECLARE
@@ -76,7 +76,7 @@ BEGIN
     LIMIT 1
     FOR UPDATE OF schedules
     SKIP LOCKED;
-  
+
   IF v_schedule IS NULL THEN
     RETURN NULL;
   END IF;
@@ -85,17 +85,17 @@ BEGIN
 
   LOOP
     v_next_check := v_next_check + interval '1 minute';
-    
-  	IF :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(v_schedule, v_next_check) THEN
+
+  	IF :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(v_schedule, v_next_check AT TIME ZONE v_schedule.timezone) THEN
       PERFORM :GRAPHILE_WORKER_SCHEMA.add_job(
         identifier := v_schedule.task_identifier,
         payload := json_build_object('fireDate', date_trunc('minute', v_next_check)),
-        queue_name := v_schedule.queue_name, 
-        run_at := date_trunc('minute', v_next_check), 
+        queue_name := v_schedule.queue_name,
+        run_at := date_trunc('minute', v_next_check),
         max_attempts := v_schedule.max_attempts
       );
   	END IF;
-  	
+
     EXIT WHEN v_next_check > until;
   END LOOP ;
 
@@ -103,7 +103,7 @@ BEGIN
     SET last_checked = v_next_check
     WHERE schedule_name = v_schedule.schedule_name
     RETURNING * INTO v_schedule;
-    
+
   RETURN v_schedule;
 END;
 $$ LANGUAGE plpgsql;
