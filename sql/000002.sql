@@ -1,3 +1,6 @@
+DROP IF EXISTS FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(ebg_toolkit_cron.schedules,timestamp with time zone);
+
+-- Re-create function to use the schedule.timezone to check date portions in the schedule
 CREATE OR REPLACE FUNCTION :GRAPHILE_SCHEDULER_SCHEMA.schedules_matches(schedule :GRAPHILE_SCHEDULER_SCHEMA.schedules, check_time_raw TIMESTAMP WITH TIME ZONE = NOW())
 RETURNS BOOLEAN
 AS $$
