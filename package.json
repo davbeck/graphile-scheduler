@@ -1,6 +1,6 @@
 {
   "name": "graphile-scheduler",
-  "version": "0.5.0",
+  "version": "0.8.0",
   "description": "Job scheduler for PostgreSQL",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
