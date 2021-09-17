@@ -1,3 +1,5 @@
+Graphile Worker now has support for scheduling built in. And it's really good! You should use that instead.
+
 # graphile-scheduler
 
 Reliable job scheduling for PostgreSQL running on Node.js built on top of [graphile-worker](https://github.com/graphile/worker). Allows you to run jobs on a regular schedule (e.g. sending reminders once a week, cleaning up data nightly, etc) with fault tolerance and resilience. Can be used with any PostgreSQL-backed application. Pairs beautifully with PostGraphile.
